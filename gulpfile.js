@@ -7,6 +7,10 @@ var gulp = require('gulp'),
 	pngmin = require('gulp-pngmin'),
 	cache = require('gulp-cached');
 
+var path = require("path"),
+	fs = require("fs"),
+	filename = new Date().getTime().toString();
+
 gulp.task('clean', function(){
 	del(['dest/*', 'src/*']);
 });
@@ -22,16 +26,26 @@ gulp.task('image_compress', function(){
 gulp.task('convert', function(){
 	gulp.src('dest/*.png')
 		.pipe(cache('convert'))
-		.pipe(gulpBase64({outPath: "new.base64"}));
+		.pipe(gulpBase64({outPath: "base64/" + filename + ".json"}));
 });
 
-gulp.task('default', []); //is equivalent to gulp.parallel()
+gulp.task('default', function () {
+	["src","dest","base64"].forEach(function(dir){
+		try {
+	    	fs.mkdirSync(dir);
+	    	console.log("create a directory:", dir);
+	  	} catch(e) {
+	    	if ( e.code != 'EEXIST' ) throw e;
+	    	else console.log(dir, "already exists");
+	  	}
+	});
+}); //is equivalent to gulp.parallel()
+
 
 gulp.watch('src/*.png', ['image_compress'])
-	// .on('change', function (event) {
-	// 	console.log('Event type1: ' + event.type);
-	// 	console.log('Event path1: ' + event.path);
-	// });
+	.on('change', function (event) {
+		filename = path.basename(event.path);
+	});
 
 gulp.watch('dest/*.png', ['convert'])
 	// .on('change', function(event){
